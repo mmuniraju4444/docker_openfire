@@ -1,0 +1,42 @@
+version: '3.3'
+services:
+  openfire:
+    build:
+      context: OpenFire
+      dockerfile: Dockerfile
+    ports:
+      - "3478:3478"
+      - "3479:3479"
+      - "5222:5222"
+      - "5223:5223"
+      - "5229:5229"
+      - "5269:5269"
+      - "7070:7070"
+      - "7443:7443"
+      - "7777:7777"
+      - "9090:9090"
+      - "9091:9091"
+#    restart: always
+    env_file:
+      - OpenFire/.env
+      
+  mariadb:
+    build:
+      context: ./MariaDB
+      dockerfile: Dockerfile
+    ports:
+      - "3306:3306"
+    restart: always
+    env_file:
+      - ./MariaDB/.env
+      
+  adminer:
+    build:
+      context: ./Adminer
+      dockerfile: Dockerfile
+    ports:
+    - "8081:8080"
+    env_file:
+      - ./Adminer/.env
+    depends_on:
+    - mariadb
