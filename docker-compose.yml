@@ -19,6 +19,9 @@ services:
 #    restart: always
     env_file:
       - OpenFire/.env
+    networks:
+      - database-network
+      - proxy-network
       
   mariadb:
     build:
@@ -29,6 +32,8 @@ services:
     restart: always
     env_file:
       - ./MariaDB/.env
+    networks:
+      - database-network
       
   adminer:
     build:
@@ -40,3 +45,77 @@ services:
       - ./Adminer/.env
     depends_on:
     - mariadb
+    networks:
+      - database-network
+
+  php-fpm:
+    build:
+      context: ./Php-fpm
+      dockerfile: Dockerfile
+    env_file:
+      - ./Php-fpm/.env
+    volumes:
+    - ./SourceCode:/var/www/html
+    networks:
+      - backend-network
+      - database-network
+
+  proxy:
+    build:
+      context: ./Proxy
+      dockerfile: Dockerfile
+    ports:
+    - "80:80"
+    restart: always
+    env_file:
+      - ./Proxy/.env
+    networks:
+      - proxy-network
+      - backend-network
+      - database-network
+
+  apache:
+    build:
+      context: ./Apache
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - ./Apache/.env
+    volumes:
+    - ./SourceCode:/var/www/html
+    ports:
+    - "8081:80"
+    depends_on:
+    - php-fpm
+    networks:
+      - backend-network
+      - proxy-network
+
+  workspace:
+    build:
+      context: ./Workspace
+      dockerfile: Dockerfile
+    env_file:
+      - ./Workspace/.env
+    volumes:
+    - ./SourceCode:/var/www/html
+    tty: true
+    stdin_open: true
+    networks:
+      - backend-network
+      - database-network
+      - proxy-network
+
+
+networks:
+#   All Database
+  database-network:
+    driver: bridge
+    internal: true
+#   Proxy server
+  proxy-network:
+    driver: bridge
+#   All Backend Application (API's)
+  backend-network:
+    driver: bridge
+    internal: true
